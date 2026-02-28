@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace PDElectric
+namespace EmissiView
 {
     public class Program
     {

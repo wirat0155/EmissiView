@@ -1,6 +1,6 @@
 using System;
 
-namespace PDElectric.Models
+namespace EmissiView.Models
 {
     public class ErrorViewModel
     {

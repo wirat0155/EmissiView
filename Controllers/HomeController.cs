@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using PDElectric.Models;
+using EmissiView.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace PDElectric.Controllers
+namespace EmissiView.Controllers
 {
     public class HomeController : Controller
     {

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using PDElectric.Models;
+using EmissiView.Models;
 
-namespace PDElectric.Services
+namespace EmissiView.Services
 {
     public interface IElectricChartRepository
     {

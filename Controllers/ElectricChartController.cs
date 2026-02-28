@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using PDElectric.Services;
+using EmissiView.Services;
 using System;
 using System.Threading.Tasks;
 
-namespace PDElectric.Controllers
+namespace EmissiView.Controllers
 {
     public class ElectricChartController : Controller
     {

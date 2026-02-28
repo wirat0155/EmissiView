@@ -1,13 +1,13 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using PDElectric.Models;
+using EmissiView.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace PDElectric.Services
+namespace EmissiView.Services
 {
     public class ElectricChartRepository : IElectricChartRepository
     {
