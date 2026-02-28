@@ -127,8 +127,8 @@ const fetchAnnualData = async (year) => {
 
         // Parallel Fetch
         const [resCurrent, resPrev] = await Promise.all([
-            fetch(`/ElectricChart/GetProductionData?startDate=${startCurrent}&endDate=${endCurrent}`),
-            fetch(`/ElectricChart/GetProductionData?startDate=${startPrev}&endDate=${endPrev}`)
+            fetch(`${basePath}/ElectricChart/GetProductionData?startDate=${startCurrent}&endDate=${endCurrent}`),
+            fetch(`${basePath}/ElectricChart/GetProductionData?startDate=${startPrev}&endDate=${endPrev}`)
         ]);
 
         const dataCurrent = resCurrent.ok ? await resCurrent.json() : [];
@@ -185,7 +185,7 @@ const fetchDailyData = async (date) => {
     // Mock generator for fallback (none expected for PROD_PLANTS now)
 
     try {
-        const response = await fetch(`/ElectricChart/GetProductionData?startDate=${startDate}&endDate=${endDate}`);
+        const response = await fetch(`${basePath}/ElectricChart/GetProductionData?startDate=${startDate}&endDate=${endDate}`);
         const apiData = await response.ok ? await response.json() : [];
 
         // Map API data to Plant dict
