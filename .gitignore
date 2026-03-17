@@ -1,0 +1,33 @@
+# User-specific files
+*.user
+*.userosscache
+*.suo
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+.vs/
+build/
+obj/
+bin/
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+
+# Sensitive files
+appsettings.json
+appsettings.*.json
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
