@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EmissiView</title>
+    <link rel="icon" href="~/images/electric_logo.png" type="image/png" asp-append-version="true" />
+    
+    <!-- Fonts -->
+    <link href="~/css/outfit-font.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/lib/remixicon/fonts/remixicon.css" rel="stylesheet" asp-append-version="true">
+    
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+    
+    <!-- Page-specific CSS -->
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    @RenderBody()
+
+    <!-- Global JS -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <!-- Page-specific JS -->
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

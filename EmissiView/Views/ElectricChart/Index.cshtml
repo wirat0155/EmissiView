@@ -1,0 +1,256 @@
+@{
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <script src="~/lib/apexcharts/apexcharts.min.js" asp-append-version="true"></script>
+    <script src="~/lib/jspdf/jspdf.umd.min.js" asp-append-version="true"></script>
+    <link rel="stylesheet" href="~/css/electric-chart.css" asp-append-version="true">
+}
+
+<div class="container">
+        <header>
+            <div class="header-top">
+                <div class="header-content" style="display: flex; align-items: center; gap: 15px;">
+                    <img src="~/images/usui-logo-rev.svg" alt="Logo" style="height: 40px; width: auto;">
+                    <div>
+                        <h1>FG Production</h1>
+                        <p>Finished Goods Output by Plant</p>
+                    </div>
+                </div>
+                <div id="currentDate" style="color: var(--text-secondary); font-size: 0.9rem;"></div>
+            </div>
+
+            <div class="controls-container">
+                <!-- Phase Selector -->
+                <div class="selector-wrapper">
+                    <select id="phaseSelector" class="phase-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-family: inherit; color: var(--text-primary); cursor: pointer; outline: none;">
+                        <option value="8">Phase 8</option>
+                        <option value="4">Phase 4</option>
+                    </select>
+                </div>
+
+                <!-- Year Comparison Toggle -->
+                <label class="toggle-container" title="Compare with data from same time last year">
+                    <span class="toggle-text">Last Year</span>
+                    <div class="switch">
+                        <input type="checkbox" id="compareToggle">
+                        <span class="slider"></span>
+                    </div>
+                </label>
+
+                <!-- Global Date Picker -->
+                <div class="date-navigator">
+                    <button class="nav-btn" id="prevDateBtn">
+                        <i class="ri-arrow-left-s-line"></i>
+                    </button>
+
+                    <div class="current-month-container">
+                        <input type="month" id="globalDateInput" class="current-month"
+                            style="background: transparent; border: none; color: inherit; font-family: inherit; font-size: inherit; font-weight: inherit; cursor: pointer;">
+                    </div>
+
+                    <button class="nav-btn" id="nextDateBtn">
+                        <i class="ri-arrow-right-s-line"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div id="wrapper">
+            <div id="chart"></div>
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay">
+                 <div class="spinner"></div>
+                 <div style="margin-top: 10px; color: var(--text-secondary); font-weight: 500;">Loading Data...</div>
+            </div>
+            <!-- No Data Message Overlay -->
+            <div id="noDataOverlay">
+                <i class="ri-file-search-line no-data-icon"></i>
+                <div class="no-data-text">No Production Data Available</div>
+                <div style="color: var(--text-secondary); margin-top: 8px;">Results for future dates are not yet
+                    generated.</div>
+            </div>
+        </div>
+
+        <div class="summary-grid" id="summaryGrid">
+            <!-- Summary cards populated by JS -->
+        </div>
+
+        <div class="detail-btn-container">
+            <button class="detail-btn" id="openDetailBtn">
+                <i class="ri-bar-chart-groupped-line"></i> Detail (Monthly View)
+            </button>
+        </div>
+
+        <!-- Section 2: Electricity Cost -->
+        <hr style="margin: 40px 0; border: 0; border-top: 1px dashed var(--border-color);">
+
+        <div class="header-content"
+            style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="~/images/electric_logo.png" alt="Electric Logo" style="height: 40px; width: auto; border-radius: 8px;">
+                <div>
+                    <h1>Electricity Cost Analysis</h1>
+                    <p>Annual Metrics - Year <span id="costYearLabel"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3 Separate Charts for Cost Analysis -->
+        <div style="display: grid; grid-template-columns: 1fr; gap: 40px;">
+
+            <!-- 1. Cost (THB) -->
+            <div class="chart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div
+                        style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                        <i class="ri-money-dollar-circle-line" style="font-size: 1.2rem; color: #f59e0b;"></i>
+                        Cost (THB)
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="costLastUpdated" style="font-size: 0.75rem; color: var(--text-secondary);"></span>
+                        <button class="detail-btn" onclick="openSecondaryModal('cost')"
+                            style="padding: 6px 12px; font-size: 0.85rem;">
+                            <i class="ri-search-eye-line"></i> Detail
+                        </button>
+                    </div>
+                </div>
+                <div id="costChart"></div>
+            </div>
+
+            <!-- 2. Consumption (kWh) -->
+            <div class="chart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div
+                        style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                        <i class="ri-flashlight-line" style="font-size: 1.2rem; color: #eab308;"></i>
+                        Consumption (kWh)
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="consumptionLastUpdated" style="font-size: 0.75rem; color: var(--text-secondary);"></span>
+                        <button class="detail-btn" onclick="openSecondaryModal('cons')"
+                            style="padding: 6px 12px; font-size: 0.85rem;">
+                            <i class="ri-search-eye-line"></i> Detail
+                        </button>
+                    </div>
+                </div>
+                <div id="consumptionChart"></div>
+            </div>
+
+            <!-- 3. CO2 Emissions -->
+            <div class="chart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div
+                        style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                        <i class="ri-leaf-line" style="font-size: 1.2rem; color: #10b981;"></i>
+                        CO₂ Emissions (kgCO₂e)
+                    </div>
+                    <button class="detail-btn" onclick="openSecondaryModal('co2')"
+                        style="padding: 6px 12px; font-size: 0.85rem;">
+                        <i class="ri-search-eye-line"></i> Detail
+                    </button>
+                </div>
+                <div id="emissionChart"></div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="margin-top: 60px; padding: 25px 0 10px 0; border-top: 1px dashed var(--border-color); display: flex; justify-content: center; align-items: center; gap: 15px; color: var(--text-secondary); font-size: 0.95rem;">
+            <img src="~/images/usui-logo-rev.svg" alt="Usui Logo" style="height: 22px; width: auto; opacity: 0.7; filter: grayscale(100%); transition: all 0.3s ease;" onmouseover="this.style.filter='none'; this.style.opacity='1'" onmouseout="this.style.filter='grayscale(100%)'; this.style.opacity='0.7'">
+            <div style="width: 1px; height: 20px; background-color: var(--border-color);"></div>
+            <img src="~/images/electric_logo.png" alt="Electric Logo" style="height: 24px; width: auto; border-radius: 4px; opacity: 0.8; filter: grayscale(100%); transition: all 0.3s ease;" onmouseover="this.style.filter='none'; this.style.opacity='1'" onmouseout="this.style.filter='grayscale(100%)'; this.style.opacity='0.8'">
+            <div style="width: 1px; height: 20px; background-color: var(--border-color);"></div>
+            <div style="display: flex; flex-direction: column; justify-content: center;">
+                <span style="font-weight: 600; letter-spacing: 0.5px; color: var(--text-primary);">EmissiView</span>
+                <span style="font-size: 0.75rem; opacity: 0.8;">Powering Sustainable Production</span>
+            </div>
+            <div style="width: 1px; height: 20px; background-color: var(--border-color);"></div>
+            <a href="@Url.Action("vLogin", "Auth")" style="display: flex; align-items: center; gap: 6px; color: var(--text-secondary); text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">
+                <i class="ri-login-box-line" style="font-size: 1.1rem;"></i>
+                <span style="font-size: 0.85rem;">Admin Login</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Detail Modal (Daily View) -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <h2>Daily FG Production</h2>
+                    <p style="color: var(--text-secondary); margin-top: 4px;">Detail View</p>
+                </div>
+                <!-- Modal Controls -->
+                <div style="margin-left: auto; display: flex; align-items: center; gap: 20px;">
+                    <!-- Modal Compare Toggle -->
+                    <label class="toggle-container" title="Compare with data from same time last year">
+                        <span class="toggle-text">Last Year</span>
+                        <div class="switch">
+                            <input type="checkbox" id="modalCompareToggle">
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+                </div>
+
+                <button class="modal-close-btn" id="closeDetailBtn">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+            <div id="dailyChart" style="min-height: 400px;"></div>
+            <!-- Modal Loading Overlay -->
+            <div id="modalLoadingOverlay">
+                 <div class="spinner"></div>
+                 <div style="margin-top: 10px; color: var(--text-secondary); font-weight: 500;">Loading Data...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Detail Modal (Cost/Cons/CO2) -->
+    <div class="modal-overlay" id="secondaryDetailModal">
+        <div class="modal-content" style="max-width: 1100px; height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <h2 id="secModalTitle">Analysis Details</h2>
+                    <p style="color: var(--text-secondary); margin-top: 4px;">Deep Dive Metrics</p>
+                </div>
+                <button class="modal-close-btn" id="closeSecDetailBtn">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+
+            <div style="overflow-y: auto; padding-right: 10px; flex: 1;">
+                <!-- Graph 1: Daily Total (Bar Stacked) -->
+                <div class="chart-section" style="margin-bottom: 40px;">
+                    <h3 id="secChartTitle1"
+                        style="margin-bottom: 15px; font-size: 1.1rem; color: var(--text-secondary);">Daily Total</h3>
+                    <div id="secChart1"></div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 30px 0;">
+
+                <!-- Graph 2: Monthly Per Unit (Line) -->
+                <div class="chart-section" style="margin-bottom: 40px;">
+                    <h3 id="secChartTitle2"
+                        style="margin-bottom: 15px; font-size: 1.1rem; color: var(--text-secondary);">Avg per Unit (Annual View - Jan to Dec)</h3>
+                    <div id="secChart2"></div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 30px 0;">
+
+                <!-- Graph 3: Daily Per Unit (Line) -->
+                <div class="chart-section">
+                    <h3 id="secChartTitle3"
+                        style="margin-bottom: 15px; font-size: 1.1rem; color: var(--text-secondary);">Avg per Unit (Daily View)</h3>
+                    <div id="secChart3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+@section Scripts {
+    <script src="~/js/electric-chart.js" asp-append-version="true"></script>
+}
