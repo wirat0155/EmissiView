@@ -817,7 +817,7 @@ const getSecondaryChartOptions = (unit) => ({
                 total: {
                     enabled: true,
                     style: { fontSize: '11px', fontWeight: 600 },
-                    formatter: (val) => val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val.toFixed(0)
+                    formatter: (val) => val >= 1000 ? (val / 1000).toFixed(3) + 'k' : val.toFixed(3)
                 }
             }
         }
@@ -830,11 +830,17 @@ const getSecondaryChartOptions = (unit) => ({
     },
     yaxis: {
         title: { text: unit },
-        labels: { formatter: (val) => val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val.toFixed(0) }
+        labels: { formatter: (val) => val >= 1000 ? (val / 1000).toFixed(3) + 'k' : val.toFixed(3) }
     },
     colors: COST_PLANTS.map(p => p.color),
     legend: { position: 'top', horizontalAlign: 'right', inverseOrder: true },
-    tooltip: { shared: true, intersect: false },
+    tooltip: { 
+        shared: true, 
+        intersect: false,
+        y: {
+            formatter: (val) => typeof val !== "undefined" ? val.toFixed(3) : val
+        }
+    },
     grid: { borderColor: '#f1f5f9' },
     noData: {
         text: 'No Data Available',
