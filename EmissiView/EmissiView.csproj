@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +29,7 @@
   <ItemGroup>
     <Folder Include="Repositories\" />
     <Folder Include="Middlewares\" />
+    <Folder Include="wwwroot\data\consumption\" />
   </ItemGroup>
 
 </Project>

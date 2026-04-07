@@ -93,12 +93,33 @@ namespace EmissiView.Controllers
 
                 // 2. Update consumption using JSON Lines format
                 var filePath = GetConsumptionFilePath(plant, year, month);
+                
+                // Read existing readings for this date to get FirstWh
+                long firstWh = model.Wh;
+                string firstTime = timeKey;
+                
+                if (System.IO.File.Exists(filePath))
+                {
+                    foreach (var line in System.IO.File.ReadLines(filePath))
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        var existingReading = JsonSerializer.Deserialize<DailyReading>(line);
+                        if (existingReading != null && existingReading.Date == dateKey)
+                        {
+                            // Use the FirstWh and FirstTime from the first reading of this date
+                            firstWh = existingReading.FirstWh;
+                            firstTime = existingReading.FirstTime;
+                            break;
+                        }
+                    }
+                }
+                
                 var reading = new DailyReading
                 {
                     Date = dateKey,
-                    FirstWh = model.Wh,
+                    FirstWh = firstWh,
                     LastWh = model.Wh,
-                    FirstTime = timeKey,
+                    FirstTime = firstTime,
                     LastTime = timeKey
                 };
 

@@ -43,6 +43,10 @@ const annualDataCache = {};
 const dailyDataCache = {};
 const secondaryCache = {};
 
+// Cache with TTL for consumption data (5 minutes)
+const consumptionCache = {};
+const CONSUMPTION_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 // Check if running on localhost (no caching)
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
@@ -514,7 +518,7 @@ const initDailyChart = () => {
                         style: {
                             fontSize: '11px', fontWeight: 700, color: '#475569'
                         },
-                        formatter: (val) => val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val.toLocaleString(),
+                        formatter: (val) => typeof val !== "undefined" && val !== null ? (val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val.toLocaleString()) : '0',
                         offsetY: -8
                     }
                 }
@@ -655,8 +659,23 @@ const updateDailyChart = async () => {
 
 // --- SECONDARY CHARTS (Cost, Consumption, CO2) ---
 
-// Helper to fetch consumption data from API (always fresh, no cache)
+// Helper to fetch consumption data from API with 5-minute cache
 const fetchConsumptionData = async (year) => {
+    const cacheKey = String(year);
+    
+    // Check cache if not localhost
+    if (!isLocalhost && consumptionCache[cacheKey]) {
+        const cached = consumptionCache[cacheKey];
+        const now = Date.now();
+        // Return cached data if still valid (within 5 minutes)
+        if (now - cached.timestamp < CONSUMPTION_CACHE_TTL) {
+            console.log(`Using cached consumption data for ${year} (age: ${Math.round((now - cached.timestamp) / 1000)}s)`);
+            return cached.data;
+        } else {
+            console.log(`Cache expired for ${year}, fetching fresh data`);
+        }
+    }
+    
     try {
         const response = await fetch(`${basePath}/api/MDB/GetMonthlyTotals?year=${year}`);
         if (!response.ok) {
@@ -695,6 +714,14 @@ const fetchConsumptionData = async (year) => {
         const costLastUpdatedEl = document.getElementById('costLastUpdated');
         if (costLastUpdatedEl) {
             costLastUpdatedEl.textContent = timestampStr;
+        }
+
+        // Store in cache with timestamp
+        if (!isLocalhost) {
+            consumptionCache[cacheKey] = {
+                data: monthlyTotals,
+                timestamp: Date.now()
+            };
         }
 
         return monthlyTotals;
@@ -845,7 +872,7 @@ const initSecondaryCharts = () => {
     costChart = new ApexCharts(document.querySelector("#costChart"), getSecondaryChartOptions('THB'));
     costChart.render();
 
-    consumptionChart = new ApexCharts(document.querySelector("#consumptionChart"), getSecondaryChartOptions('kWh'));
+    consumptionChart = new ApexCharts(document.querySelector("#consumptionChart"), getSecondaryChartOptions('Wh'));
     consumptionChart.render();
 
     emissionChart = new ApexCharts(document.querySelector("#emissionChart"), getSecondaryChartOptions('kgCO₂e'));
