@@ -31,3 +31,6 @@ appsettings.*.json
 *.swp
 *.swo
 *~
+
+# Data folder
+data/

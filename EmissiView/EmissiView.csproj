@@ -22,6 +22,9 @@
     <None Remove="wwwroot/data/**" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="wwwroot\data\energy_log.json" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="JWTRegen">
       <HintPath>JWTRegen.dll</HintPath>
     </Reference>
@@ -29,7 +32,10 @@
   <ItemGroup>
     <Folder Include="Repositories\" />
     <Folder Include="Middlewares\" />
-    <Folder Include="wwwroot\data\consumption\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="wwwroot\data\consumption\brazing\2026-03.jsonl" />
+    <None Include="wwwroot\data\consumption\brazing\2026-04.jsonl" />
   </ItemGroup>
 
 </Project>

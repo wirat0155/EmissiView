@@ -17,6 +17,7 @@ const COST_PLANTS = [
 
 // Utility Constants
 const UTILITY_RATE = 4.21; // THB per kWh
+const CO2_EMISSION_FACTOR = 0.0004750; // kgCO₂e per kWh
 
 // --- State Application ---
 let state = {
@@ -756,11 +757,14 @@ const generateSecondaryData = async (year) => {
         })
     }));
 
-    // CO2 (kg) - Empty (no data yet)
+    // CO2 (kgCO₂e) = Consumption (kWh) * CO2_EMISSION_FACTOR
     const co2Data = COST_PLANTS.map(plant => ({
         name: plant.name,
         color: plant.color,
-        data: new Array(12).fill(0)
+        data: (monthlyTotals[plant.id] || []).map(kwh => {
+            if (kwh === null || kwh === undefined) return null;
+            return Math.round(kwh * CO2_EMISSION_FACTOR * 1000) / 1000; // Round to 3 decimals
+        })
     }));
 
     const result = { costData, consData, co2Data };
@@ -1040,6 +1044,9 @@ const openSecondaryModal = async (type) => {
     if (type === 'cost') {
         document.getElementById('secChartTitle2').textContent = `Avg Cost per Unit (Annual View - Jan to Dec ${currentYear})`;
         document.getElementById('secChartTitle3').textContent = `Avg Cost per Unit (Daily View - ${currentMonthName} ${currentYear})`;
+    } else if (type === 'co2') {
+        document.getElementById('secChartTitle2').textContent = `Avg kgCO₂e per Unit (Annual View - Jan to Dec ${currentYear})`;
+        document.getElementById('secChartTitle3').textContent = `Avg kgCO₂e per Unit (Daily View - ${currentMonthName} ${currentYear})`;
     } else {
         document.getElementById('secChartTitle2').textContent = `Avg Wh per Unit (Annual View - Jan to Dec ${currentYear})`;
         document.getElementById('secChartTitle3').textContent = `Avg Wh per Unit (Daily View - ${currentMonthName} ${currentYear})`;
@@ -1108,8 +1115,14 @@ const updateSecondaryDetailCharts = async (type) => {
                 const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const value = result.dailyTotals?.[plant.id]?.[dateKey];
                 if (value === undefined || value === null) return null;
-                // For cost, multiply by utility rate
-                return type === 'cost' ? Math.round(value * UTILITY_RATE * 100) / 100 : value;
+                // For cost, multiply by utility rate; for CO2, multiply by emission factor
+                if (type === 'cost') {
+                    return Math.round(value * UTILITY_RATE * 100) / 100;
+                } else if (type === 'co2') {
+                    return Math.round(value * CO2_EMISSION_FACTOR * 1000) / 1000;
+                } else {
+                    return value;
+                }
             })
         }));
         secChart1.updateOptions({ xaxis: { categories: daysArr } });
@@ -1144,7 +1157,7 @@ const updateSecondaryDetailCharts = async (type) => {
         // Calculate monthly totals from consumption (always fetch fresh data)
         const monthlyTotals = await fetchConsumptionData(year);
 
-        // Chart 2: Monthly Avg per Unit (Line) - Monthly (kWh or Cost) / Monthly FG Production
+        // Chart 2: Monthly Avg per Unit (Line) - Monthly (kWh or Cost or CO2) / Monthly FG Production
         const series2 = COST_PLANTS.map(plant => {
             const plantMonthlyData = monthlyTotals[plant.id] || [];
             const data = plantMonthlyData.map((kwh, idx) => {
@@ -1155,6 +1168,10 @@ const updateSecondaryDetailCharts = async (type) => {
                     // Cost per Unit = (Monthly kWh * UTILITY_RATE) / Monthly Production
                     const cost = kwh * UTILITY_RATE;
                     return Math.round(cost / production * 100) / 100;
+                } else if (type === 'co2') {
+                    // CO2 per Unit = (Monthly kWh * CO2_EMISSION_FACTOR) / Monthly Production
+                    const co2 = kwh * CO2_EMISSION_FACTOR;
+                    return Math.round(co2 / production * 1000000) / 1000000; // Round to 6 decimals for precision
                 } else {
                     // Wh per Unit = (Monthly kWh * 1000) / Monthly Production
                     const wh = kwh * 1000;
@@ -1196,7 +1213,7 @@ const updateSecondaryDetailCharts = async (type) => {
             });
         }
 
-        // Chart 3: Daily Avg per Unit (Line) - Daily (kWh or Cost) / Daily FG Production
+        // Chart 3: Daily Avg per Unit (Line) - Daily (kWh or Cost or CO2) / Daily FG Production
         const series3 = COST_PLANTS.map(plant => {
             const data = daysArr.map(day => {
                 const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -1209,6 +1226,10 @@ const updateSecondaryDetailCharts = async (type) => {
                     // Cost per Unit = (Daily kWh * UTILITY_RATE) / Daily Production
                     const cost = kwh * UTILITY_RATE;
                     return Math.round(cost / production * 100) / 100;
+                } else if (type === 'co2') {
+                    // CO2 per Unit = (Daily kWh * CO2_EMISSION_FACTOR) / Daily Production
+                    const co2 = kwh * CO2_EMISSION_FACTOR;
+                    return Math.round(co2 / production * 1000000) / 1000000; // Round to 6 decimals for precision
                 } else {
                     // Wh per Unit = (Daily kWh * 1000) / Daily Production
                     const wh = kwh * 1000;
