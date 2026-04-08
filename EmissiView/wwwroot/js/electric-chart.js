@@ -882,7 +882,7 @@ const initSecondaryCharts = () => {
     costChart = new ApexCharts(document.querySelector("#costChart"), getSecondaryChartOptions('THB'));
     costChart.render();
 
-    consumptionChart = new ApexCharts(document.querySelector("#consumptionChart"), getSecondaryChartOptions('Wh'));
+    consumptionChart = new ApexCharts(document.querySelector("#consumptionChart"), getSecondaryChartOptions('kWh'));
     consumptionChart.render();
 
     emissionChart = new ApexCharts(document.querySelector("#emissionChart"), getSecondaryChartOptions('kgCO₂e'));
@@ -996,40 +996,86 @@ let secChart1, secChart2, secChart3;
 const secModal = document.getElementById('secondaryDetailModal');
 
 // Reusable Options
-const getDetailChartOptions = (type, unit) => ({
-    series: [],
-    chart: { 
-        type: 'line', 
-        height: 350, 
-        toolbar: { show: false },
-        zoom: { enabled: false },
-        responsive: [{
-            breakpoint: 768,
-            options: {
-                legend: { position: 'bottom', horizontalAlign: 'center' }
+const getDetailChartOptions = (type, unit, chartIndex = 1) => {
+    // Helper function to format numbers with significant digits
+    const formatWithSignificantDigits = (val) => {
+        if (val === null || val === undefined || isNaN(val)) return '';
+        if (val === 0) return '0';
+        
+        // For values >= 1000, use k notation
+        if (Math.abs(val) >= 1000) {
+            return (val / 1000).toFixed(1) + 'k';
+        }
+        
+        // For small values, show significant digits
+        if (Math.abs(val) < 1) {
+            // Find the position of first non-zero digit
+            const str = val.toExponential();
+            const exponent = parseInt(str.split('e')[1]);
+            const decimalPlaces = Math.abs(exponent) + 1;
+            return val.toFixed(decimalPlaces);
+        }
+        
+        return val.toFixed(2);
+    };
+
+    return {
+        series: [],
+        chart: { 
+            type: 'line', 
+            height: 350, 
+            toolbar: { show: false },
+            zoom: { enabled: false },
+            responsive: [{
+                breakpoint: 768,
+                options: {
+                    legend: { position: 'bottom', horizontalAlign: 'center' }
+                }
+            }, {
+                breakpoint: 480,
+                options: {
+                    legend: { position: 'bottom', horizontalAlign: 'center', fontSize: '11px' }
+                }
+            }]
+        },
+        stroke: { width: 3, curve: 'smooth' },
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } }, // If bar used
+        yaxis: { 
+            title: { text: chartIndex === 1 ? unit : (type === 'cons' ? 'Wh/Unit' : (type === 'cost' ? 'THB/Unit' : 'kgCO₂e/Unit')) },
+            labels: { 
+                formatter: formatWithSignificantDigits
             }
-        }, {
-            breakpoint: 480,
-            options: {
-                legend: { position: 'bottom', horizontalAlign: 'center', fontSize: '11px' }
-            }
-        }]
-    },
-    stroke: { width: 3, curve: 'smooth' },
-    plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } }, // If bar used
-    yaxis: { 
-        title: { text: type === 'cons' ? 'Wh' : (type === 'cost' ? 'THB/Unit' : unit) },
-        labels: { 
-            formatter: (val) => {
-                if (val === null || val === undefined || isNaN(val)) return '';
-                return val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val.toFixed(2);
+        },
+        legend: { position: 'top', horizontalAlign: 'right', inverseOrder: true },
+        colors: COST_PLANTS.map(p => p.color),
+        grid: { borderColor: '#f1f5f9' },
+        tooltip: {
+            shared: true,
+            intersect: false,
+            y: {
+                formatter: (val) => {
+                    if (val === null || val === undefined || isNaN(val)) return '';
+                    if (val === 0) return '0';
+                    
+                    // For values >= 1000, use k notation
+                    if (Math.abs(val) >= 1000) {
+                        return (val / 1000).toFixed(1) + 'k';
+                    }
+                    
+                    // For small values, show significant digits
+                    if (Math.abs(val) < 1) {
+                        const str = val.toExponential();
+                        const exponent = parseInt(str.split('e')[1]);
+                        const decimalPlaces = Math.abs(exponent) + 1;
+                        return val.toFixed(decimalPlaces);
+                    }
+                    
+                    return val.toFixed(2);
+                }
             }
         }
-    },
-    legend: { position: 'top', horizontalAlign: 'right', inverseOrder: true },
-    colors: COST_PLANTS.map(p => p.color),
-    grid: { borderColor: '#f1f5f9' }
-});
+    };
+};
 
 const openSecondaryModal = async (type) => {
     let title = '';
@@ -1063,7 +1109,7 @@ const openSecondaryModal = async (type) => {
     // Init charts if first time
     if (!secChart1) {
         secChart1 = new ApexCharts(document.querySelector("#secChart1"), {
-            ...getDetailChartOptions(type, unit),
+            ...getDetailChartOptions(type, unit, 1),
             chart: { type: 'bar', stacked: true, height: 350, toolbar: { show: false }, zoom: { enabled: false } },
             plotOptions: {
                 bar: {
@@ -1084,18 +1130,20 @@ const openSecondaryModal = async (type) => {
         });
         secChart1.render();
         secChart2 = new ApexCharts(document.querySelector("#secChart2"), {
-            ...getDetailChartOptions(type, unit),
+            ...getDetailChartOptions(type, unit, 2),
             stroke: { curve: 'straight' }
         });
         secChart2.render();
         secChart3 = new ApexCharts(document.querySelector("#secChart3"), {
-            ...getDetailChartOptions(type, unit),
+            ...getDetailChartOptions(type, unit, 3),
             stroke: { curve: 'straight' }
         });
         secChart3.render();
     } else {
         // Update Y-Axis titles
-        [secChart1, secChart2, secChart3].forEach(c => c.updateOptions({ yaxis: { title: { text: unit } } }));
+        secChart1.updateOptions({ yaxis: { title: { text: unit } } });
+        secChart2.updateOptions({ yaxis: { title: { text: type === 'cons' ? 'Wh/Unit' : (type === 'cost' ? 'THB/Unit' : 'kgCO₂e/Unit') } } });
+        secChart3.updateOptions({ yaxis: { title: { text: type === 'cons' ? 'Wh/Unit' : (type === 'cost' ? 'THB/Unit' : 'kgCO₂e/Unit') } } });
     }
 
     await updateSecondaryDetailCharts(type);
@@ -1120,7 +1168,7 @@ const updateSecondaryDetailCharts = async (type) => {
             data: daysArr.map(day => {
                 const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const value = result.dailyTotals?.[plant.id]?.[dateKey];
-                if (value === undefined || value === null) return null;
+                if (value === undefined || value === null) return 0;
                 // For cost, multiply by utility rate; for CO2, multiply by emission factor
                 if (type === 'cost') {
                     return Math.round(value * UTILITY_RATE * 100) / 100;
@@ -1167,9 +1215,9 @@ const updateSecondaryDetailCharts = async (type) => {
         const series2 = COST_PLANTS.map(plant => {
             const plantMonthlyData = monthlyTotals[plant.id] || [];
             const data = plantMonthlyData.map((kwh, idx) => {
-                if (kwh === null || kwh === undefined || kwh === 0) return null;
+                if (kwh === null || kwh === undefined || kwh === 0) return 0;
                 const production = prodByMonth[plant.id][idx] || 1;
-                if (production <= 0) return null;
+                if (production <= 0) return 0;
                 if (type === 'cost') {
                     // Cost per Unit = (Monthly kWh * UTILITY_RATE) / Monthly Production
                     const cost = kwh * UTILITY_RATE;
@@ -1224,10 +1272,10 @@ const updateSecondaryDetailCharts = async (type) => {
             const data = daysArr.map(day => {
                 const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const kwh = result.dailyTotals?.[plant.id]?.[dateKey];
-                if (kwh === undefined || kwh === null) return null;
-                if (kwh === 0) return null;
+                if (kwh === undefined || kwh === null) return 0;
+                if (kwh === 0) return 0;
                 const production = prodByDay[plant.id][day] || 1;
-                if (production <= 0) return null;
+                if (production <= 0) return 0;
                 if (type === 'cost') {
                     // Cost per Unit = (Daily kWh * UTILITY_RATE) / Daily Production
                     const cost = kwh * UTILITY_RATE;
