@@ -222,6 +222,13 @@
             color: var(--primary-color);
         }
 
+        .mdb-kwh-decimal {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
         .mdb-timestamp {
             font-size: 12px;
             color: var(--text-secondary);
@@ -338,7 +345,15 @@
 
                     <div class="mdb-data-row">
                         <span class="mdb-data-label">Energy (This Month)</span>
-                        <span class="mdb-kwh">@item.kWh.ToString("N3") kWh</span>
+                        <span class="mdb-kwh">
+                            @{
+                                var kwhStr = item.kWh.ToString("N3");
+                                var parts = kwhStr.Split('.');
+                                var intPart = parts[0];
+                                var decPart = parts.Length > 1 ? "." + parts[1] : "";
+                            }
+                            @intPart<span class="mdb-kwh-decimal">@decPart kWh</span>
+                        </span>
                     </div>
 
                     @if (!string.IsNullOrEmpty(item.FirstDate) && !string.IsNullOrEmpty(item.LastDate))
