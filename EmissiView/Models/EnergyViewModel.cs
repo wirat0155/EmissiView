@@ -11,5 +11,7 @@ namespace EmissiView.Models
         public DateTime LastUpdate { get; set; }
         public bool IsAlive { get; set; }
         public string LastSeenText { get; set; }
+        public string FirstDate { get; set; }
+        public string LastDate { get; set; }
     }
 }

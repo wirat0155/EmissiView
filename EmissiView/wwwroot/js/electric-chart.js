@@ -1007,6 +1007,11 @@ const getDetailChartOptions = (type, unit, chartIndex = 1) => {
             return (val / 1000).toFixed(1) + 'k';
         }
         
+        // For consumption (kWh), always show 3 decimal places
+        if (type === 'cons') {
+            return val.toFixed(3);
+        }
+        
         // For small values, show significant digits
         if (Math.abs(val) < 1) {
             // Find the position of first non-zero digit
@@ -1041,7 +1046,7 @@ const getDetailChartOptions = (type, unit, chartIndex = 1) => {
         stroke: { width: 3, curve: 'smooth' },
         plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } }, // If bar used
         yaxis: { 
-            title: { text: chartIndex === 1 ? unit : (type === 'cons' ? 'Wh/Unit' : (type === 'cost' ? 'THB/Unit' : 'kgCO₂e/Unit')) },
+            title: { text: chartIndex === 1 ? unit : (type === 'cons' ? 'kWh/Unit' : (type === 'cost' ? 'THB/Unit' : 'kgCO₂e/Unit')) },
             labels: { 
                 formatter: formatWithSignificantDigits
             }
@@ -1060,6 +1065,11 @@ const getDetailChartOptions = (type, unit, chartIndex = 1) => {
                     // For values >= 1000, use k notation
                     if (Math.abs(val) >= 1000) {
                         return (val / 1000).toFixed(1) + 'k';
+                    }
+                    
+                    // For consumption (kWh), always show 3 decimal places
+                    if (type === 'cons') {
+                        return val.toFixed(3);
                     }
                     
                     // For small values, show significant digits
@@ -1100,8 +1110,8 @@ const openSecondaryModal = async (type) => {
         document.getElementById('secChartTitle2').textContent = `Avg kgCO₂e per Unit (Annual View - Jan to Dec ${currentYear})`;
         document.getElementById('secChartTitle3').textContent = `Avg kgCO₂e per Unit (Daily View - ${currentMonthName} ${currentYear})`;
     } else {
-        document.getElementById('secChartTitle2').textContent = `Avg Wh per Unit (Annual View - Jan to Dec ${currentYear})`;
-        document.getElementById('secChartTitle3').textContent = `Avg Wh per Unit (Daily View - ${currentMonthName} ${currentYear})`;
+        document.getElementById('secChartTitle2').textContent = `Avg kWh per Unit (Annual View - Jan to Dec ${currentYear})`;
+        document.getElementById('secChartTitle3').textContent = `Avg kWh per Unit (Daily View - ${currentMonthName} ${currentYear})`;
     }
 
     secModal.classList.add('active');
@@ -1142,8 +1152,8 @@ const openSecondaryModal = async (type) => {
     } else {
         // Update Y-Axis titles
         secChart1.updateOptions({ yaxis: { title: { text: unit } } });
-        secChart2.updateOptions({ yaxis: { title: { text: type === 'cons' ? 'Wh/Unit' : (type === 'cost' ? 'THB/Unit' : 'kgCO₂e/Unit') } } });
-        secChart3.updateOptions({ yaxis: { title: { text: type === 'cons' ? 'Wh/Unit' : (type === 'cost' ? 'THB/Unit' : 'kgCO₂e/Unit') } } });
+        secChart2.updateOptions({ yaxis: { title: { text: type === 'cons' ? 'kWh/Unit' : (type === 'cost' ? 'THB/Unit' : 'kgCO₂e/Unit') } } });
+        secChart3.updateOptions({ yaxis: { title: { text: type === 'cons' ? 'kWh/Unit' : (type === 'cost' ? 'THB/Unit' : 'kgCO₂e/Unit') } } });
     }
 
     await updateSecondaryDetailCharts(type);
@@ -1227,9 +1237,8 @@ const updateSecondaryDetailCharts = async (type) => {
                     const co2 = kwh * CO2_EMISSION_FACTOR;
                     return Math.round(co2 / production * 1000000) / 1000000; // Round to 6 decimals for precision
                 } else {
-                    // Wh per Unit = (Monthly kWh * 1000) / Monthly Production
-                    const wh = kwh * 1000;
-                    return Math.round(wh / production * 100) / 100;
+                    // kWh per Unit = Monthly kWh / Monthly Production
+                    return Math.round(kwh / production * 1000) / 1000; // 3 decimal places
                 }
             });
             return {
@@ -1285,9 +1294,8 @@ const updateSecondaryDetailCharts = async (type) => {
                     const co2 = kwh * CO2_EMISSION_FACTOR;
                     return Math.round(co2 / production * 1000000) / 1000000; // Round to 6 decimals for precision
                 } else {
-                    // Wh per Unit = (Daily kWh * 1000) / Daily Production
-                    const wh = kwh * 1000;
-                    return Math.round(wh / production * 100) / 100;
+                    // kWh per Unit = Daily kWh / Daily Production
+                    return Math.round(kwh / production * 1000) / 1000; // 3 decimal places
                 }
             });
             return {

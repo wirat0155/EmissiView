@@ -26,6 +26,89 @@
             font-size: 14px;
         }
 
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            background: #0d47a1;
+            transform: translateX(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .back-btn i {
+            font-size: 16px;
+        }
+
+        .status-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+            padding: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .legend-item .status-dot {
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+
+        .legend-item .status-dot.online {
+            background: #10b981;
+            animation: pulse-green 2s infinite;
+        }
+
+        .legend-item .status-dot.offline {
+            background: #ef4444;
+        }
+
+        .legend-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .legend-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .legend-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        @@keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
         .mdb-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -81,11 +164,6 @@
         .status-dot.offline {
             background: #ef4444;
             animation: none;
-        }
-
-        @@keyframes pulse-green {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
         }
 
         .status-text {
@@ -188,14 +266,48 @@
             .mdb-header h1 {
                 font-size: 24px;
             }
+
+            .back-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .status-legend {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 }
 
 <div class="container mdb-container">
     <div class="mdb-header">
-        <h1>MDB Real-Time Status</h1>
-        <p>Live energy monitoring dashboard</p>
+        <div style="display: flex; align-items: center; gap: 15px; justify-content: space-between;">
+            <div>
+                <h1>MDB Real-Time Status</h1>
+                <p>Live energy monitoring dashboard &mdash; Monthly consumption: @DateTime.Now.ToString("dd MMM yyyy")</p>
+            </div>
+            <a href="@Url.Action("Index", "ElectricChart")" class="back-btn" title="Back to Production Dashboard">
+                <i class="ri-arrow-left-line"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Legend -->
+    <div class="status-legend">
+        <div class="legend-item">
+            <div class="status-dot online"></div>
+            <div class="legend-content">
+                <span class="legend-label">Online</span>
+                <span class="legend-desc">Data received within last 5 minutes</span>
+            </div>
+        </div>
+        <div class="legend-item">
+            <div class="status-dot offline"></div>
+            <div class="legend-content">
+                <span class="legend-label">Offline</span>
+                <span class="legend-desc">No data received for more than 5 minutes</span>
+            </div>
+        </div>
     </div>
 
     @if (Model == null || Model.Count == 0)
@@ -225,17 +337,20 @@
                     <div class="mdb-plant">@item.Plant</div>
 
                     <div class="mdb-data-row">
-                        <span class="mdb-data-label">Status</span>
-                        <span class="mdb-data-value">@item.Status</span>
-                    </div>
-
-                    <div class="mdb-data-row">
-                        <span class="mdb-data-label">Energy</span>
+                        <span class="mdb-data-label">Energy (This Month)</span>
                         <span class="mdb-kwh">@item.kWh.ToString("N3") kWh</span>
                     </div>
 
+                    @if (!string.IsNullOrEmpty(item.FirstDate) && !string.IsNullOrEmpty(item.LastDate))
+                    {
+                        <div class="mdb-data-row" style="font-size: 11px; color: var(--text-secondary);">
+                            <span class="mdb-data-label">Period</span>
+                            <span>@(DateTime.Parse(item.FirstDate).ToString("dd MMM yyyy")) to @(DateTime.Parse(item.LastDate).ToString("dd MMM yyyy"))</span>
+                        </div>
+                    }
+
                     <div class="mdb-timestamp">
-                        <div>@item.LastUpdate.ToString("dd/MM/yyyy HH:mm:ss")</div>
+                        <div>@item.LastUpdate.ToString("dd MMM yyyy HH:mm:ss")</div>
                         <div class="mdb-last-seen">@item.LastSeenText</div>
                     </div>
                 </div>

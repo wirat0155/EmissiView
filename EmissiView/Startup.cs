@@ -142,6 +142,7 @@ namespace EmissiView
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllers(); // For API controllers with [Route] attribute
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=ElectricChart}/{action=Index}/{id?}");
